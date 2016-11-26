@@ -260,3 +260,27 @@ class FileDataMgr(CacheDataMgr):
 
     def _test_batch(self):
         return self._get_batch(self._test_batcher)
+
+
+class CompositeDataMgr(DataMgr):
+
+    def __init__(self, batch_size, data_mgrs):
+        super(CompositeDataMgr, self).__init__(batch_size)
+        self._batch_size = batch_size
+        self._data_mgrs = data_mgrs
+
+    def _get_batch(self, method):
+        ans = []
+        for data_mgr in self._data_mgrs:
+            ans.extend(getattr(data_mgr, method)())
+        random.shuffle(ans)
+        return stack_list(ans[0:self._batch_size])
+        
+    def _train_batch(self):
+        return self._get_batch("train_batch")
+
+    def _valid_batch(self):
+        return self._get_batch("valid_batch")
+
+    def _test_batch(self):
+        return self._get_batch("test_batch")
